@@ -31,6 +31,8 @@ RBT *insert(RBT **s, int key, int val);
 void check(RBT *s);
 void change(RBT *s);
 void checkRot(RBT *s);
+void checkBrother(RBT *s);
+void checkDelete(RBT *s);
 
 // Variable global para obtener el número de elementos
 int count = 0;
@@ -134,6 +136,7 @@ RBT *insert(RBT **s, int key, int val)   {
             (*s)->right->left = NULL;//(RBT *)malloc(sizeof(RBT));
             (*s)->right->right = NULL;//(RBT *)malloc(sizeof(RBT));
             (*s)->right->parent = *s;
+            (*s)->right->color = RED;
             return (*s)->right;
         }
     }
@@ -148,6 +151,7 @@ RBT *insert(RBT **s, int key, int val)   {
             (*s)->left->left = NULL;//(RBT *)malloc(sizeof(RBT));
             (*s)->left->right = NULL;//(RBT *)malloc(sizeof(RBT));
             (*s)->left->parent = *s;
+            (*s)->left->color = RED;
             return (*s)->left;
         }
     }
@@ -217,6 +221,7 @@ void put(RBT **s, int key, int val) {
     
     // Verificamos la coloración
     check(node);
+    return;
 }
 
 // Devuelve el valor asociado a la llave
@@ -326,6 +331,115 @@ void inorder_traversal(RBT *s){
     return;
 }
 
+void delete(RBT *s, int key)    {
+    //Buscamos primero el nodo
+    RBT *node = get_ptr(s, key);
+    //Si no lo encontramos
+    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return;}
+    
+    //Si no tiene hijos, actualizamos padre y borramos
+    if((node->left == NULL) && (node->right == NULL))   {
+        //Si somos hijos derechos
+        if(node->parent != NULL && node->parent->right == node)
+            node->parent->right = NULL;
+        //Sino somos izquierdos
+        else if(node->parent != NULL)
+            node->parent->left = NULL;
+        free(node);
+        return;
+    }
+    //Sino, tiene al menos un hijo.
+    checkDelete(node);
+}
+
+void checkDelete(RBT *s)    {
+    //Es el hijo izquierdo
+	RBT *son;
+    if(s->right == NULL)
+        son = s->left;
+    //Es el hijo derecho
+    else
+        son = s->right;
+    
+    //Intercambiamos padre e hijo
+    son->parent = s->parent;
+    //Si es hijo izquierdo
+    if(s == s->parent->left)
+        s->parent->left = son;
+    //Es derecho
+    else 
+        s->parent->right = son;
+    
+    //Si el nodo y el hijo son color negro, corregimos
+    if(s->color == BLACK) {
+        if (son->color == RED) 
+            son->color = BLACK;
+        else {
+            if (son->parent != NULL) 
+                checkBrother(son);
+        }
+    }
+    free(s);
+}
+
+void checkBrother(RBT *s)   {
+    //Obtenemos el hermano
+    RBT* bro = brother(s);
+    //Si es rojo cambiamos a negro y al padre a rojo
+    if (bro->color == RED) {
+        s->parent->color = RED;
+        bro->color = BLACK;
+        //Balanceamos 
+        if (s == s->parent->left) 
+            leftRot(s->parent);
+        else 
+            rightRot(s->parent);
+    }
+    //Sino somos negro.
+    // Si todo el alrededor el negro
+    if((s->parent->color == BLACK) && (bro->color == BLACK) && (bro->left->color == BLACK) && (bro->right->color == BLACK)) {
+        bro->color = RED;
+        checkDelete(s->parent);
+    } 
+    else {
+        //Si solo nuestro papa es rojo
+        if((s->parent->color == RED) && (bro->color == BLACK) && (bro->left->color == BLACK) && (bro->right->color == BLACK)) {
+            bro->color = RED;
+            s->parent->color = BLACK;
+        } 
+        else {
+            //Si nuestro hermano es negro, entonces hay un sobrino rojo
+            if (bro->color == BLACK) {
+                // Rotamos a la derecha si el sobrino derecho es negro y el izquierdo rojo
+                if ((s == s->parent->left) && (bro->right->color == BLACK) &&(bro->left->color == RED)) {
+                    bro->color = RED;
+                    bro->left->color = BLACK;
+                    rightRot(bro);
+                }
+                // Rotamos a la izquierda si el sobrino derecho es rojo y el izquierdo negro
+                else if ((s == s->parent->right) && (bro->left->color == BLACK) && (bro->right->color == RED)) {
+                    bro->color = RED;
+                    bro->right->color = BLACK;
+                    leftRot(s);
+                }
+            }
+            //Sino nuestro hermano era rojo, cmabiamos por el color del padre
+            bro->color = s->parent->color;
+            s->parent->color = BLACK;
+            //Rotamos izquierda si somos hijos izquierdos
+            if (s == s->parent->left) {
+                bro->right->color = BLACK;
+                leftRot(s->parent);
+            } 
+            //Rotamos a la derecha si no
+            else {
+                bro->left->color = BLACK;
+                rightRot(s->parent);
+            }
+        }
+    }
+}
+
 // Pruebas parciales, tentativamente se creará "specs.c"
 int main(){
 
@@ -333,6 +447,7 @@ int main(){
     put(&my_tree,3,5);
     put(&my_tree,-3,5);
     put(&my_tree,0,5);
+    printf("hola\n");
     printf("%d ", size(my_tree));
 
 }
