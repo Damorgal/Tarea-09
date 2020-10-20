@@ -80,7 +80,8 @@ void rightRot(RBT *s)   {
     
     //Actualizamos el hijo izquierdo 
     s->left = aux->right;
-    s->left->parent = s;
+    if(s->left != NULL)
+        s->left->parent = s;
     
     //Actualizamos el hijo derecho del nodo 
     aux->right = s;
@@ -103,7 +104,8 @@ void leftRot(RBT *s)    {
     
     //Actualizamos el hijo derecho 
     s->right = aux->left;
-    s->right->parent = s;
+    if(s->right != NULL)
+        s->right->parent = s;
     
     //Actualizamos el hijo izquierdo del nodo 
     aux->left = s;
