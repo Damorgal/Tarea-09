@@ -14,7 +14,7 @@ typedef struct RBT{
 } RBT;
 
 // API
-void put(RBT *s, int key, int val);
+RBT *put(RBT *s, int key, int val);
 int get(RBT *s, int key);
 RBT *get_ptr(RBT *s, int key);
 int contains(RBT *s, int key);
@@ -217,13 +217,17 @@ void checkRot(RBT *s)    {
 // Insertar nuevo nodo
 // Falta colorear y reacomodar
 
-void put(RBT *s, int key, int val) {
+RBT *put(RBT *s, int key, int val) {
     //Insertamos como un BBT normal
     RBT *node = insert(s, key, val);
     
     // Verificamos la coloración
     check(node);
-    return;
+    
+    //Actualizamos el nodo raiz
+    while(s->parent != NULL)
+        s = s->parent;
+    return s;
 }
 
 // Devuelve el valor asociado a la llave
@@ -455,8 +459,8 @@ int main(){
     my_tree->color = BLACK;
     
     //Siguientes
-    put(my_tree,-3,5);
-    put(my_tree,0,5);
+    my_tree = put(my_tree,-3,5);
+    my_tree = put(my_tree,0,5);
     printf("%d ", size(my_tree));
 
 }
