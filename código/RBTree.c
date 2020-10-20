@@ -18,7 +18,7 @@ RBT *put(RBT *s, int key, int val);
 int get(RBT *s, int key);
 RBT *get_ptr(RBT *s, int key);
 int contains(RBT *s, int key);
-void delete(RBT *s, int key);
+RBT *delete(RBT *s, int key);
 int isEmpty(RBT *s);
 int size(RBT *s);
 void inorder_traversal(RBT *s);
@@ -337,11 +337,11 @@ void inorder_traversal(RBT *s){
     return;
 }
 
-void delete(RBT *s, int key)    {
+RBT *delete(RBT *s, int key)    {
     //Buscamos primero el nodo
     RBT *node = get_ptr(s, key);
     //Si no lo encontramos
-    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return;}
+    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return s;}
     
     //Si no tiene hijos, actualizamos padre y borramos
     if((node->left == NULL) && (node->right == NULL))   {
@@ -352,10 +352,14 @@ void delete(RBT *s, int key)    {
         else if(node->parent != NULL)
             node->parent->left = NULL;
         free(node);
-        return;
+        return s;
     }
     //Sino, tiene al menos un hijo.
     checkDelete(node);
+    //Actualizamos el nodo raiz
+    while(s->parent != NULL)
+        s = s->parent;
+    return s;
 }
 
 void checkDelete(RBT *s)    {
@@ -461,6 +465,7 @@ int main(){
     //Siguientes
     my_tree = put(my_tree,-3,5);
     my_tree = put(my_tree,0,5);
+    my_tree = delete(my_tree,3);
     printf("%d ", size(my_tree));
 
 }
