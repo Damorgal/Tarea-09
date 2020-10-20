@@ -18,7 +18,7 @@ RBT *put(RBT *s, int key, int val);
 int get(RBT *s, int key);
 RBT *get_ptr(RBT *s, int key);
 int contains(RBT *s, int key);
-RBT *delete(RBT *s, int key);
+void delete(RBT *s, int key);
 int isEmpty(RBT *s);
 int size(RBT *s);
 void inorder_traversal(RBT *s);
@@ -337,14 +337,34 @@ void inorder_traversal(RBT *s){
     return;
 }
 
-RBT *delete(RBT *s, int key)    {
+void delete(RBT *s, int key)    {
     //Buscamos primero el nodo
     RBT *node = get_ptr(s, key);
     //Si no lo encontramos
-    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return s;}
+    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return;}
     
-    //Si no tiene hijos, actualizamos padre y borramos
-    if((node->left == NULL) && (node->right == NULL))   {
+    //Borramos como BST normal
+    RBT *aux;
+    //El más grande de los menores
+    if(node->left != NULL)  {
+        aux = node->left;
+        while(aux->right != NULL)
+            aux = aux->right;
+        //Copiamos info
+        node->key = aux->key;
+        node->value = aux->value;
+    }
+    //El más pequeño de los mayores
+    else if(node->right != NULL)  {
+        aux = node->right;
+        while(aux->left != NULL)
+            aux = aux->left;
+        //Copiamos info
+        node->key = aux->key;
+        node->value = aux->value;
+    }
+    //Sino no tiene hijos, actualizamos padre y borramos
+    else  {
         //Si somos hijos derechos
         if(node->parent != NULL && node->parent->right == node)
             node->parent->right = NULL;
@@ -352,14 +372,21 @@ RBT *delete(RBT *s, int key)    {
         else if(node->parent != NULL)
             node->parent->left = NULL;
         free(node);
-        return s;
+        return;
+    }
+    //Vemos si tiene hijos
+    if(aux->left == NULL && aux->right == NULL) {
+        //Si somos hijos derechos
+        if(aux->parent != NULL && aux->parent->right == aux)
+            aux->parent->right = NULL;
+        //Sino somos izquierdos
+        else if(aux->parent != NULL)
+            aux->parent->left = NULL;
+        free(aux);
+        return;
     }
     //Sino, tiene al menos un hijo.
-    checkDelete(node);
-    //Actualizamos el nodo raiz
-    while(s->parent != NULL)
-        s = s->parent;
-    return s;
+    checkDelete(aux);
 }
 
 void checkDelete(RBT *s)    {
@@ -465,8 +492,15 @@ int main(){
     //Siguientes
     my_tree = put(my_tree,-3,5);
     my_tree = put(my_tree,0,5);
-    my_tree = delete(my_tree,3);
+    my_tree = put(my_tree,10,5);
+    my_tree = put(my_tree,12,5);
+    my_tree = put(my_tree,-1,5);
+    my_tree = put(my_tree,4,5);
+    my_tree = put(my_tree,33,5);
     printf("%d ", size(my_tree));
-
+    delete(my_tree,0);
+    printf("%d ", size(my_tree));
+    delete(my_tree,10);
+    printf("%d ", size(my_tree));
 }
 
