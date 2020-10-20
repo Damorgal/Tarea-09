@@ -209,12 +209,11 @@ void put(RBT *s, int key, int val) {
 
 // Devuelve el valor asociado a la llave
 int get(RBT *s, int key){
-
     // Si se llega a un nodo terminal
-    if(s->key == 0){
+    if(s == NULL){
         return -1;
     }
-
+    
     // En caso de encontrar la llave
     else if(key == s->key){
         return s->value;
@@ -226,7 +225,7 @@ int get(RBT *s, int key){
     }
 
     // Lo que se busca es más pequeño que la llave del nodo
-    else if(key < s->key){
+    else {
         return get(s->left, key);
     }
 }
@@ -235,10 +234,9 @@ int get(RBT *s, int key){
 // ¿Existe algún nodo con la llave?
 // 1 éxito, 0 fracaso
 int contains(RBT *s, int key){
-
     // Si se llega a un nodo terminal
-    if(s->key == 0){
-        return -1;
+    if(s == NULL){
+        return 0;
     }
 
     // Se encuentra la llave
@@ -252,7 +250,7 @@ int contains(RBT *s, int key){
     }
 
     // Lo que se busca es más pequeño que la llave del nodo
-    else if(key < s->key){
+    else {
         return get(s->left, key);
     }
 
@@ -260,18 +258,18 @@ int contains(RBT *s, int key){
 
 
 // 0 si está vacío, 1 si tiene algún elemento
-int isEmpty(RBT *s){
-    return (s->key != 0);
+int isEmpty(RBT *s) {
+    return (s != NULL);
 }
 
 
 // Número de elementos en el árbol, sin contar nodos terminales
 int size(RBT *s){
-
+    
     count = 0;
     
     // Si no se cuenta con ningún elemento
-    if(s->key == 0){
+    if(s == NULL){
         return count;
     }
 
@@ -283,17 +281,14 @@ int size(RBT *s){
 
 // Se recorre el ABB en orden
 void inorder_traversal(RBT *s){
-
-    if(s->left->key != 0){
+    count++;
+    
+    if(s->left != NULL){
         inorder_traversal(s->left);
     }
-
-    count++;
-
-    if(s->right->key != 0){
+    if(s->right != NULL){
         inorder_traversal(s->right);
     }
-
     return;
 }
 
