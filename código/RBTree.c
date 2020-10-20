@@ -16,6 +16,7 @@ typedef struct RBT{
 // API
 void put(RBT *s, int key, int val);
 int get(RBT *s, int key);
+RBT *get_ptr(RBT *s, int key);
 int contains(RBT *s, int key);
 void delete(RBT *s, int key);
 int isEmpty(RBT *s);
@@ -25,10 +26,13 @@ void rightRot(RBT *s);
 void leftRot(RBT *s);
 RBT *grand(RBT *s);
 RBT *uncle(RBT *s);
+RBT *brother(RBT *s);
 RBT *insert(RBT *s, int key, int val);
 void check(RBT *s);
 void change(RBT *s);
 void checkRot(RBT *s);
+void checkBrother(RBT *s);
+void checkDelete(RBT *s);
 
 // Variable global para obtener el número de elementos
 int count = 0;
@@ -43,12 +47,21 @@ RBT *grand(RBT *s)  {
         return NULL;
 }
 
+//Función para encontrar el tío rápido
 RBT *uncle(RBT *s)  {
     RBT *aux = grand(s);
     if (s->parent == aux->left)
         return aux->right;
     else
         return aux->left;
+}
+
+//Función para encontrar el hermano rápido
+RBT *brother(RBT *s)  {
+    if (s == s->parent->left)
+        return s->parent->right;
+    else
+        return s->parent->left;
 }
 
 // Rotación a la derecha para corrección de propiedades
@@ -102,41 +115,44 @@ RBT *insert(RBT *s, int key, int val)   {
     // Si no se tiene valor de llave, crear nuevo nodo
     if(s == NULL){
         s = (RBT *)malloc(sizeof(RBT));
-        s->key = key;
-        s->value = val;
-        s->left = NULL;//(RBT *)malloc(sizeof(RBT));
-        s->right = NULL;//(RBT *)malloc(sizeof(RBT));
-        s->parent = NULL;
+        (s)->key = key;
+        (s)->value = val;
+        (s)->left = NULL;//(RBT *)malloc(sizeof(RBT));
+        (s)->right = NULL;//(RBT *)malloc(sizeof(RBT));
+        (s)->parent = NULL;
+        (s)->color = BLACK;
         //s->left->parent = s;
         //s->right->parent = s;
         return s;
     }
     // La nueva llave es más grande que la llave del nodo
-    if(key > s->key)    {
-        if(s->right != NULL)
-            insert(s->right, key, val);
+    if(key > (s)->key)    {
+        if((s)->right != NULL)
+            insert((s)->right, key, val);
         else    {
-            s->right = (RBT*)malloc(sizeof(RBT));
-            s->right->key = key;
-            s->right->value = val;
-            s->right->left = NULL;//(RBT *)malloc(sizeof(RBT));
-            s->right->right = NULL;//(RBT *)malloc(sizeof(RBT));
-            s->right->parent = s;
-            return s->right;
+            (s)->right = (RBT*)malloc(sizeof(RBT));
+            (s)->right->key = key;
+            (s)->right->value = val;
+            (s)->right->left = NULL;//(RBT *)malloc(sizeof(RBT));
+            (s)->right->right = NULL;//(RBT *)malloc(sizeof(RBT));
+            (s)->right->parent = s;
+            (s)->right->color = RED;
+            return (s)->right;
         }
     }
     // La nueva llave es más pequeña que la llave del nodo
     else    {
-        if(s->left != NULL)
-            insert(s->left, key, val);
+        if((s)->left != NULL)
+            insert((s)->left, key, val);
         else {
-            s->left = (RBT*)malloc(sizeof(RBT));
-            s->left->key = key;
-            s->left->value = val;
-            s->left->left = NULL;//(RBT *)malloc(sizeof(RBT));
-            s->left->right = NULL;//(RBT *)malloc(sizeof(RBT));
-            s->left->parent = s;
-            return s->left;
+            (s)->left = (RBT*)malloc(sizeof(RBT));
+            (s)->left->key = key;
+            (s)->left->value = val;
+            (s)->left->left = NULL;//(RBT *)malloc(sizeof(RBT));
+            (s)->left->right = NULL;//(RBT *)malloc(sizeof(RBT));
+            (s)->left->parent = s;
+            (s)->left->color = RED;
+            return (s)->left;
         }
     }
 }
@@ -205,6 +221,7 @@ void put(RBT *s, int key, int val) {
     
     // Verificamos la coloración
     check(node);
+    return;
 }
 
 // Devuelve el valor asociado a la llave
@@ -227,6 +244,29 @@ int get(RBT *s, int key){
     // Lo que se busca es más pequeño que la llave del nodo
     else {
         return get(s->left, key);
+    }
+}
+
+// Devuelve el apuntador al nodo asociado a la llave
+RBT *get_ptr(RBT *s, int key)   {
+    // Si se llega a un nodo terminal
+    if(s == NULL){
+        return NULL;
+    }
+    
+    // En caso de encontrar la llave
+    else if(key == s->key){
+        return s;
+    }
+
+    // Lo que se busca es más grande que la llave del nodo
+    else if(key > s->key){
+        return get_ptr(s->right, key);
+    }
+
+    // Lo que se busca es más pequeño que la llave del nodo
+    else {
+        return get_ptr(s->left, key);
     }
 }
 
@@ -255,7 +295,6 @@ int contains(RBT *s, int key){
     }
 
 }
-
 
 // 0 si está vacío, 1 si tiene algún elemento
 int isEmpty(RBT *s) {
@@ -292,11 +331,130 @@ void inorder_traversal(RBT *s){
     return;
 }
 
+void delete(RBT *s, int key)    {
+    //Buscamos primero el nodo
+    RBT *node = get_ptr(s, key);
+    //Si no lo encontramos
+    if(node == NULL) {printf("Error, tratas de eliminar una llave inexistente\n"); return;}
+    
+    //Si no tiene hijos, actualizamos padre y borramos
+    if((node->left == NULL) && (node->right == NULL))   {
+        //Si somos hijos derechos
+        if(node->parent != NULL && node->parent->right == node)
+            node->parent->right = NULL;
+        //Sino somos izquierdos
+        else if(node->parent != NULL)
+            node->parent->left = NULL;
+        free(node);
+        return;
+    }
+    //Sino, tiene al menos un hijo.
+    checkDelete(node);
+}
+
+void checkDelete(RBT *s)    {
+    //Es el hijo izquierdo
+	RBT *son;
+    if(s->right == NULL)
+        son = s->left;
+    //Es el hijo derecho
+    else
+        son = s->right;
+    
+    //Intercambiamos padre e hijo
+    son->parent = s->parent;
+    //Si es hijo izquierdo
+    if(s == s->parent->left)
+        s->parent->left = son;
+    //Es derecho
+    else 
+        s->parent->right = son;
+    
+    //Si el nodo y el hijo son color negro, corregimos
+    if(s->color == BLACK) {
+        if (son->color == RED) 
+            son->color = BLACK;
+        else {
+            if (son->parent != NULL) 
+                checkBrother(son);
+        }
+    }
+    free(s);
+}
+
+void checkBrother(RBT *s)   {
+    //Obtenemos el hermano
+    RBT* bro = brother(s);
+    //Si es rojo cambiamos a negro y al padre a rojo
+    if (bro->color == RED) {
+        s->parent->color = RED;
+        bro->color = BLACK;
+        //Balanceamos 
+        if (s == s->parent->left) 
+            leftRot(s->parent);
+        else 
+            rightRot(s->parent);
+    }
+    //Sino somos negro.
+    // Si todo el alrededor el negro
+    if((s->parent->color == BLACK) && (bro->color == BLACK) && (bro->left->color == BLACK) && (bro->right->color == BLACK)) {
+        bro->color = RED;
+        checkDelete(s->parent);
+    } 
+    else {
+        //Si solo nuestro papa es rojo
+        if((s->parent->color == RED) && (bro->color == BLACK) && (bro->left->color == BLACK) && (bro->right->color == BLACK)) {
+            bro->color = RED;
+            s->parent->color = BLACK;
+        } 
+        else {
+            //Si nuestro hermano es negro, entonces hay un sobrino rojo
+            if (bro->color == BLACK) {
+                // Rotamos a la derecha si el sobrino derecho es negro y el izquierdo rojo
+                if ((s == s->parent->left) && (bro->right->color == BLACK) &&(bro->left->color == RED)) {
+                    bro->color = RED;
+                    bro->left->color = BLACK;
+                    rightRot(bro);
+                }
+                // Rotamos a la izquierda si el sobrino derecho es rojo y el izquierdo negro
+                else if ((s == s->parent->right) && (bro->left->color == BLACK) && (bro->right->color == RED)) {
+                    bro->color = RED;
+                    bro->right->color = BLACK;
+                    leftRot(s);
+                }
+            }
+            //Sino nuestro hermano era rojo, cmabiamos por el color del padre
+            bro->color = s->parent->color;
+            s->parent->color = BLACK;
+            //Rotamos izquierda si somos hijos izquierdos
+            if (s == s->parent->left) {
+                bro->right->color = BLACK;
+                leftRot(s->parent);
+            } 
+            //Rotamos a la derecha si no
+            else {
+                bro->left->color = BLACK;
+                rightRot(s->parent);
+            }
+        }
+    }
+}
 
 // Pruebas parciales, tentativamente se creará "specs.c"
 int main(){
-
+    
     RBT *my_tree = (RBT*)malloc(sizeof(RBT));
+    //Primer elemento
+    my_tree->key = 3;
+    my_tree->value = 5;
+    my_tree->parent = NULL;
+    my_tree->right = NULL;
+    my_tree->left = NULL;
+    my_tree->color = BLACK;
+    
+    //Siguientes
+    put(my_tree,-3,5);
+    put(my_tree,0,5);
     printf("%d ", size(my_tree));
 
 }
